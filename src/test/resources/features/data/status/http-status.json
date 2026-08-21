@@ -1,0 +1,16 @@
+{
+  "success": {
+    "ok": 200,
+    "created": 201,
+    "accepted": 202
+  },
+  "clientError": {
+    "badRequest": 400,
+    "unauthorized": 401,
+    "forbidden": 403,
+    "notFound": 404
+  },
+  "serverError": {
+    "internalServerError": 500
+  }
+}
