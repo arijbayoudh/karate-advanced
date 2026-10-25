@@ -1,10 +1,10 @@
-##@Test
+@Test
 Feature: Comments API Tests
 
   Background:
     * url 'https://jsonplaceholder.typicode.com/'
     * header Accept = 'application/json'
-
+    * def commentSchema = read('classpath:features/data/request/comment-schema.json')
 
   # ============================================================
   # GET ALL COMMENTS
@@ -15,23 +15,8 @@ Feature: Comments API Tests
     When method GET
     Then status 200
 
-    # Vérifier que la réponse est un tableau
-    And match response == '#[]'
-
-    # Vérifier la structure de chaque commentaire
-    And match each response ==
-      """
-      {
-        postId: '#number',
-        id: '#number',
-        name: '#string',
-        email: '#string',
-        body: '#string'
-      }
-      """
-
-    # Vérifier le nombre de commentaires
     And match response == '#[500]'
+    And match each response == commentSchema
 
 
   # ============================================================
@@ -43,16 +28,12 @@ Feature: Comments API Tests
     When method GET
     Then status 200
 
-    # Vérification des champs
+    And match response == commentSchema
     And match response.id == 1
-    And match response.postId == '#number'
-    And match response.name == '#string'
-    And match response.email == '#string'
-    And match response.body == '#string'
 
 
   # ============================================================
-  # GET COMMENT - VALIDATE COMPLETE RESPONSE
+  # GET COMMENT - VALIDATE EXACT VALUES
   # ============================================================
 
   Scenario: Get comment 1 with exact values
@@ -82,28 +63,9 @@ Feature: Comments API Tests
     When method GET
     Then status 200
 
-    # Vérifier que la réponse est un tableau
     And match response == '#[]'
-
-    # Tous les commentaires doivent appartenir au post 1
-    And match each response contains
-      """
-      {
-        postId: 1
-      }
-      """
-
-    # Vérifier la structure
-    And match each response ==
-      """
-      {
-        postId: '#number',
-        id: '#number',
-        name: '#string',
-        email: '#string',
-        body: '#string'
-      }
-      """
+    And match each response contains { postId: 1 }
+    And match each response == commentSchema
 
 
   # ============================================================
@@ -116,14 +78,8 @@ Feature: Comments API Tests
     Then status 200
 
     And match response == '#[]'
-
-    # Tous les commentaires doivent avoir postId = 1
-    And match each response contains
-      """
-      {
-        postId: 1
-      }
-      """
+    And match each response contains { postId: 1 }
+    And match each response == commentSchema
 
 
   # ============================================================
@@ -143,28 +99,17 @@ Feature: Comments API Tests
   Scenario: Create a new comment
     Given path 'comments'
 
-    And request
-      """
-      {
-    "postId": 1,
-    "name": "Karate Test",
-    "email": "karate@test.com",
-    "body": "This comment was created using Karate"
-    }
-    """
+    * def commentPayload = read('classpath:features/data/request/comments.json')
+    And request commentPayload
 
     And header Content-Type = 'application/json'
-
     When method POST
     Then status 201
 
-    # Vérification des données retournées
-    And match response.postId == 1
-    And match response.name == 'Karate Test'
-    And match response.email == 'karate@test.com'
-    And match response.body == 'This comment was created using Karate'
-
-    # ID généré
+    And match response.postId == commentPayload.postId
+    And match response.name == commentPayload.name
+    And match response.email == commentPayload.email
+    And match response.body == commentPayload.body
     And match response.id == '#number'
 
 
@@ -175,27 +120,23 @@ Feature: Comments API Tests
   Scenario: Update a comment with PUT
     Given path 'comments', 1
 
-    And request
+    * def updatePayload =
       """
       {
-    "id": 1,
-    "postId": 1,
-    "name": "Updated Comment",
-    "email": "updated@test.com",
-    "body": "Updated comment body"
-    }
-    """
+        "id": 1,
+        "postId": 1,
+        "name": "Updated Comment",
+        "email": "updated@test.com",
+        "body": "Updated comment body"
+      }
+      """
+    And request updatePayload
 
     And header Content-Type = 'application/json'
-
     When method PUT
     Then status 200
 
-    And match response.id == 1
-    And match response.postId == 1
-    And match response.name == 'Updated Comment'
-    And match response.email == 'updated@test.com'
-    And match response.body == 'Updated comment body'
+    And match response == updatePayload
 
 
   # ============================================================
@@ -205,20 +146,20 @@ Feature: Comments API Tests
   Scenario: Update only the body of a comment
     Given path 'comments', 1
 
-    And request
+    * def patchPayload =
       """
       {
         "body": "Body updated with PATCH"
       }
       """
+    And request patchPayload
 
     And header Content-Type = 'application/json'
-
     When method PATCH
     Then status 200
 
     And match response.id == 1
-    And match response.body == 'Body updated with PATCH'
+    And match response.body == patchPayload.body
 
 
   # ============================================================
@@ -229,7 +170,3 @@ Feature: Comments API Tests
     Given path 'comments', 1
     When method DELETE
     Then status 200
-
-    #Exercices:
-    #Devide between Get and Post files
-    #Exchange with best practice

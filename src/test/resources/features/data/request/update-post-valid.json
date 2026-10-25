@@ -1,0 +1,5 @@
+{
+  "title" : "update post title",
+  "body" : "this post has been updated successfully using PUT",
+  "userId" : 1
+}
